@@ -577,10 +577,10 @@
         let analysisResult = '';
         let uploadedFile = null;
 
-        // Google Gemini API Configuration - INTEGRATED
+        // Google Gemini API Configuration - WORKING FOR INDIA
         const GEMINI_API_KEY = 'AIzaSyD7kG6vmfN6GQTShnt2_tdezfEJYHXC7CU';
-        // Using the correct model name format for v1beta API
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+        // Using the latest stable model - gemini-2.5-flash (replaces 1.5-flash)
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
         // File upload handling
         const fileInput = document.getElementById('fileInput');
