@@ -579,8 +579,8 @@
 
         // Google Gemini API Configuration - INTEGRATED
         const GEMINI_API_KEY = 'AIzaSyD7kG6vmfN6GQTShnt2_tdezfEJYHXC7CU';
-        // Using Gemini 1.5 Flash which is stable and supports vision
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        // Using v1 API with gemini-1.5-flash model
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
         // File upload handling
         const fileInput = document.getElementById('fileInput');
@@ -714,7 +714,8 @@
                     ]
                 };
 
-                console.log('📡 Calling Gemini API...');
+                console.log('📡 Calling Gemini API with URL:', GEMINI_API_URL);
+                console.log('🔑 Using API Key:', GEMINI_API_KEY.substring(0, 20) + '...');
                 
                 const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
@@ -722,24 +723,38 @@
                     body: JSON.stringify(requestBody)
                 });
 
+                console.log('📥 Response Status:', response.status);
+
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('API Error:', errorText);
-                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                    console.error('❌ API Error Response:', errorText);
+                    
+                    // Parse error for better messaging
+                    let errorObj;
+                    try {
+                        errorObj = JSON.parse(errorText);
+                    } catch (e) {
+                        errorObj = { error: { message: errorText } };
+                    }
+                    
+                    throw new Error(`API Error ${response.status}: ${errorObj.error?.message || errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ Successfully received response');
                 
                 if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                     analysisResult = data.candidates[0].content.parts[0].text;
                     displayAnalysis(analysisResult);
                 } else {
+                    console.error('Invalid response structure:', data);
                     throw new Error('Invalid API response structure');
                 }
 
             } catch (error) {
+                console.error('💥 Analysis error:', error);
                 if (error.message === 'Failed to fetch') {
-                    throw new Error('CORS ERROR: Cannot fetch from Gemini API directly from file://');
+                    throw new Error('CORS ERROR: Cannot fetch from Gemini API. Make sure you are running this on a web server, not opening the file directly.');
                 }
                 throw error;
             }
