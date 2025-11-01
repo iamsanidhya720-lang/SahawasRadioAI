@@ -579,8 +579,8 @@
 
         // Google Gemini API Configuration - INTEGRATED
         const GEMINI_API_KEY = 'AIzaSyD7kG6vmfN6GQTShnt2_tdezfEJYHXC7CU';
-        // Using v1 API with gemini-1.5-flash model
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+        // Using v1beta API which supports latest models
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
         // File upload handling
         const fileInput = document.getElementById('fileInput');
