@@ -537,7 +537,7 @@
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Analyzing your medical report...</p>
+            <p>Analyzing your medical report with AI...</p>
         </div>
 
         <div class="result-section" id="resultSection">
@@ -577,8 +577,8 @@
         let analysisResult = '';
         let uploadedFile = null;
 
-        // Google Gemini API Configuration
-        const GEMINI_API_KEY = 'AIzaSyARGIgvFsnefD2hRq6FgJAakLMnRe5OU7g';
+        // Google Gemini API Configuration - INTEGRATED
+        const GEMINI_API_KEY = 'AIzaSyD7kG6vmfN6GQTShnt2_tdezfEJYHXC7CU';
         const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
         // File upload handling
@@ -629,7 +629,6 @@
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => {
-                    // Remove the data:image/jpeg;base64, part
                     const base64 = reader.result.split(',')[1];
                     resolve(base64);
                 };
@@ -654,62 +653,25 @@
             resultSection.style.display = 'none';
 
             try {
-                console.log('Starting real AI analysis...');
-                await performRealAIAnalysis(reportType);
-                console.log('✅ Real AI analysis completed successfully');
+                console.log('🚀 Starting AI analysis with Gemini...');
+                await performGeminiAnalysis(reportType);
+                console.log('✅ Analysis completed successfully!');
             } catch (error) {
-                console.error('❌ Real AI Analysis failed:', error);
+                console.error('❌ Analysis failed:', error);
                 
-                let errorMessage = '';
-                let fallbackToDemo = false;
+                let errorMessage = `**⚠️ ANALYSIS ERROR**\n\n${error.message}\n\n`;
                 
-                if (error.message.includes('CORS_BLOCKED') || error.message.includes('NETWORK_ERROR')) {
-                    errorMessage = `⚠️ **BROWSER LIMITATION DETECTED**
-
-The Gemini AI API cannot be accessed directly from the browser due to CORS (Cross-Origin Resource Sharing) restrictions.
-
-**Technical Issue:** ${error.message}
-
-**Solutions:**
-1. **For Production:** Set up a backend server to proxy API requests
-2. **For Development:** Use a browser extension to disable CORS
-3. **Alternative:** Deploy this code to a web server with backend support
-
-**For Demo Purposes:** Would you like to see a simulated analysis to understand how the interface works?`;
+                if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                    errorMessage += `**This is a browser CORS limitation.**\n\nThe Gemini API cannot be called directly from HTML files opened locally (file://) due to browser security.\n\n**Solutions:**\n1. Use a web server (Python: python -m http.server)\n2. Deploy to a hosting service\n3. Use the backend server approach I provided earlier\n\nWould you like to see a demo analysis instead?`;
                     
-                    fallbackToDemo = true;
-                } else if (error.message.includes('API_KEY_INVALID')) {
-                    errorMessage = `🔑 **API KEY ISSUE**
-                    
-The provided API key appears to be invalid or doesn't have the necessary permissions.
-
-**Please check:**
-- API key is correct and active
-- API key has Gemini API access enabled
-- Billing is set up for the Google Cloud project`;
-                    
-                } else if (error.message.includes('RATE_LIMIT')) {
-                    errorMessage = `⏳ **RATE LIMIT EXCEEDED**
-                    
-The API rate limit has been exceeded. Please wait a few minutes and try again.`;
-                    
-                } else {
-                    errorMessage = `❌ **ANALYSIS FAILED**
-                    
-Unexpected error: ${error.message}`;
-                }
-                
-                // Show detailed error analysis
-                displayAnalysis(errorMessage);
-                
-                if (fallbackToDemo) {
-                    // Add a button to show demo analysis
+                    displayAnalysis(errorMessage);
                     setTimeout(() => {
                         const content = document.getElementById('analysisContent');
-                        content.innerHTML += `<br><br><button onclick="showDemoAnalysis('${reportType}')" style="background: #10b981; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">📋 Show Demo Analysis</button>`;
-                    }, 1000);
+                        content.innerHTML += `<br><br><button onclick="showDemoAnalysis('${reportType}')" style="background: #10b981; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: Poppins;">📋 Show Demo Analysis</button>`;
+                    }, 500);
+                } else {
+                    displayAnalysis(errorMessage);
                 }
-                
             } finally {
                 loading.style.display = 'none';
                 analyzeBtn.disabled = false;
@@ -717,84 +679,18 @@ Unexpected error: ${error.message}`;
             }
         }
 
-        // Demo analysis function for CORS issues
-        window.showDemoAnalysis = function(reportType) {
-            const demoAnalysis = generateDemoAnalysis(reportType);
-            displayAnalysis(demoAnalysis);
-        }
-
-        function generateDemoAnalysis(reportType) {
-            const timestamp = new Date().toLocaleString();
-            
-            if (reportType === 'radiology') {
-                return `**DEMO AI ANALYSIS - CHEST X-RAY**
-*This is a demonstration of how the real AI analysis would appear*
-
-**IMAGING TECHNIQUE**
-Posteroanterior and lateral chest radiographs were obtained using standard technique. Image quality is adequate for diagnostic interpretation with appropriate exposure and positioning.
-
-**ANATOMICAL STRUCTURES**
-The cardiac silhouette appears normal in size and configuration. Both hemidiaphragms are clearly visualized and appropriately positioned. The mediastinal contours are within normal limits. Pulmonary vasculature shows normal distribution and caliber.
-
-**FINDINGS** 
-The lungs are clear bilaterally with no evidence of focal consolidation, pleural effusion, or pneumothorax. No acute cardiopulmonary abnormality is identified. Bony structures appear intact with no obvious fractures or lesions visible.
-
-**IMPRESSION**
-Normal chest radiograph. No acute cardiopulmonary findings.
-
-**RECOMMENDATIONS**
-- Clinical correlation with patient symptoms
-- Consider CT chest if clinical suspicion remains high despite normal radiograph
-- Routine follow-up as clinically indicated
-
-**IMPORTANT NOTE**
-This is a **DEMONSTRATION** analysis showing the interface functionality. Real AI analysis requires proper backend integration to handle CORS restrictions.
-
-*Generated: ${timestamp}*`;
-            } else {
-                return `**DEMO AI ANALYSIS - LABORATORY REPORT**
-*This is a demonstration of how the real AI analysis would appear*
-
-**IMAGING TECHNIQUE**
-Laboratory analysis performed on submitted blood sample. Standard automated analyzer protocols utilized.
-
-**FINDINGS**
-Based on visible parameters in the uploaded report image:
-- Complete Blood Count (CBC) values appear to be within reference ranges
-- Basic metabolic panel shows normal kidney and liver function markers
-- No critical values flagged in the visible results
-
-**IMPRESSION**
-Laboratory values appear grossly normal based on visible parameters. Detailed analysis requires clearer image quality for precise value extraction.
-
-**RECOMMENDATIONS**
-- Clinical correlation recommended
-- Repeat testing if symptoms persist
-- Consult with ordering physician for complete interpretation
-
-**IMPORTANT NOTE**
-This is a **DEMONSTRATION** analysis. Real AI would perform OCR (Optical Character Recognition) to extract exact values and provide detailed interpretation.
-
-*Generated: ${timestamp}*`;
-            }
-        }
-
-        async function performRealAIAnalysis(reportType) {
+        async function performGeminiAnalysis(reportType) {
             try {
                 console.log('🔄 Converting image to base64...');
                 const base64Image = await fileToBase64(uploadedFile);
                 const mimeType = uploadedFile.type;
-                console.log(`📸 Image processed: ${mimeType}, size: ${base64Image.length} characters`);
-
+                
                 const prompt = getAnalysisPrompt(reportType);
-                console.log(`📝 Generated prompt for ${reportType} analysis`);
-
+                
                 const requestBody = {
                     contents: [{
                         parts: [
-                            {
-                                text: prompt
-                            },
+                            { text: prompt },
                             {
                                 inline_data: {
                                     mime_type: mimeType,
@@ -810,104 +706,40 @@ This is a **DEMONSTRATION** analysis. Real AI would perform OCR (Optical Charact
                         maxOutputTokens: 4096,
                     },
                     safetySettings: [
-                        {
-                            category: "HARM_CATEGORY_HARASSMENT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_HATE_SPEECH", 
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            threshold: "BLOCK_NONE"
-                        }
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
                     ]
                 };
 
-                console.log('🚀 Sending request to Gemini API...');
+                console.log('📡 Calling Gemini API...');
                 
-                // Try with different fetch configurations to handle CORS
-                const fetchOptions = {
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                    mode: 'cors', // Explicitly set CORS mode
-                    credentials: 'omit' // Don't send credentials
-                };
-
-                let response;
-                try {
-                    // First try with the standard API endpoint
-                    response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, fetchOptions);
-                } catch (corsError) {
-                    console.log('🔄 CORS issue detected, trying alternative approach...');
-                    
-                    // Try with a CORS proxy as fallback
-                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`);
-                    
-                    try {
-                        response = await fetch(proxyUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(requestBody)
-                        });
-                    } catch (proxyError) {
-                        console.error('❌ Both direct and proxy requests failed');
-                        throw new Error('CORS_BLOCKED: Cannot access Gemini API from browser. This is a browser security limitation.');
-                    }
-                }
-
-                console.log(`📡 API Response status: ${response.status}`);
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('❌ API Error Response:', errorText);
-                    
-                    if (response.status === 403) {
-                        throw new Error('API_KEY_INVALID: The provided API key is invalid or doesn\'t have permission to access this service.');
-                    } else if (response.status === 429) {
-                        throw new Error('RATE_LIMIT: API rate limit exceeded. Please try again later.');
-                    } else {
-                        throw new Error(`API_ERROR: HTTP ${response.status} - ${errorText}`);
-                    }
+                    console.error('API Error:', errorText);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
                 }
 
                 const data = await response.json();
-                console.log('📄 API Response received:', data);
                 
-                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                     analysisResult = data.candidates[0].content.parts[0].text;
-                    console.log('✅ Analysis extracted successfully, length:', analysisResult.length);
                     displayAnalysis(analysisResult);
                 } else {
-                    console.error('❌ Invalid response structure:', data);
-                    if (data.candidates && data.candidates[0] && data.candidates[0].finishReason) {
-                        throw new Error(`AI_BLOCKED: AI response was blocked due to: ${data.candidates[0].finishReason}`);
-                    }
-                    throw new Error('INVALID_RESPONSE: No valid content found in API response');
+                    throw new Error('Invalid API response structure');
                 }
 
             } catch (error) {
-                console.error('💥 Real AI analysis error:', error);
-                
-                // Provide more specific error handling
                 if (error.message === 'Failed to fetch') {
-                    throw new Error('NETWORK_ERROR: Cannot connect to AI service. This might be due to:\n' +
-                                  '• Browser CORS restrictions\n' + 
-                                  '• Network connectivity issues\n' +
-                                  '• Firewall blocking the request\n\n' +
-                                  'Recommendation: Use a backend server to proxy API requests.');
+                    throw new Error('CORS ERROR: Cannot fetch from Gemini API directly from file://');
                 }
-                
                 throw error;
             }
         }
@@ -948,96 +780,70 @@ Requirements:
             }
         }
 
-        async function performEnhancedSimulation(reportType) {
-            // Enhanced fallback with more dynamic content
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
+        // Demo analysis for CORS issues
+        window.showDemoAnalysis = function(reportType) {
             const timestamp = new Date().toLocaleString();
-            const simulatedAnalysis = generateDynamicAnalysis(reportType, timestamp);
-            
-            analysisResult = simulatedAnalysis;
-            displayAnalysis(analysisResult);
-        }
-
-        function generateDynamicAnalysis(reportType, timestamp) {
-            const patientId = 'SAH' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            
-            if (reportType === 'radiology') {
-                return `**AI ANALYSIS REPORT**
-Generated: ${timestamp} | Patient ID: ${patientId} | Status: Simulated Analysis
+            const demoAnalysis = reportType === 'radiology' ? 
+                `**DEMO AI ANALYSIS - RADIOLOGY REPORT**
+*Generated: ${timestamp}*
 
 **IMAGING TECHNIQUE**
-Image analysis performed using advanced AI algorithms optimized for medical imaging interpretation. The uploaded image has been processed for contrast enhancement, noise reduction, and anatomical structure identification.
+Posteroanterior and lateral chest radiographs obtained using standard digital radiography technique. Image quality is adequate for diagnostic interpretation with appropriate exposure, positioning, and no significant motion artifact.
 
-**IMAGE QUALITY ASSESSMENT**
-The provided image quality allows for adequate visualization of key anatomical structures. AI confidence level in analysis: Moderate to High.
+**ANATOMICAL STRUCTURES**
+The cardiac silhouette appears normal in size and configuration with a cardiothoracic ratio within normal limits. Both hemidiaphragms are clearly visualized and appropriately positioned. The trachea is midline. Mediastinal contours are unremarkable. The visualized bony thorax shows no acute abnormality.
 
-**ANATOMICAL STRUCTURES IDENTIFIED**
-Based on AI pattern recognition, the following structures appear to be visualized:
-- Primary anatomical regions consistent with ${reportType} imaging
-- Tissue density patterns within expected parameters
-- Structural boundaries clearly delineated
+**FINDINGS**
+The lungs are clear bilaterally with no evidence of focal consolidation, pleural effusion, or pneumothorax. The pulmonary vasculature appears normal in caliber and distribution. No masses, nodules, or infiltrates are identified. The costophrenic angles are sharp bilaterally. No pleural thickening or calcification is noted.
 
-**AI FINDINGS**
-The AI analysis suggests:
-- No immediately obvious acute abnormalities detected by automated screening
-- Tissue patterns appear within typical variation ranges
-- Recommend professional radiologist review for definitive interpretation
-
-**CLINICAL CORRELATION**
-This AI-generated analysis should be correlated with:
-- Patient's clinical presentation and symptoms
-- Laboratory findings and vital signs
-- Previous imaging studies for comparison
-- Physical examination findings
+**IMPRESSION**
+Normal chest radiograph. No acute cardiopulmonary findings. The heart size and pulmonary vasculature are within normal limits for age and body habitus.
 
 **RECOMMENDATIONS**
-- Professional radiologist interpretation required for definitive diagnosis
-- Clinical correlation with treating physician essential
-- Consider follow-up imaging if clinically indicated
-- Patient consultation for symptom correlation
+- Clinical correlation with patient symptoms and physical examination findings
+- No immediate follow-up imaging required unless clinically indicated
+- Consider CT chest with contrast if there is high clinical suspicion despite normal radiograph
+- Routine screening as per standard guidelines
 
-**IMPORTANT DISCLAIMER**
-This analysis was generated by AI technology and is for educational/screening purposes only. It does not replace professional medical interpretation by qualified radiologists.`;
-            } else {
-                return `**AI LABORATORY ANALYSIS REPORT**
-Generated: ${timestamp} | Patient ID: ${patientId} | Status: Simulated Analysis
+**DISCLAIMER**
+This is a demonstration analysis showing the AI interface functionality. For actual medical reports, please consult with a qualified radiologist or healthcare provider.` 
+            : 
+                `**DEMO AI ANALYSIS - LABORATORY REPORT**
+*Generated: ${timestamp}*
 
-**METHODOLOGY**
-Advanced AI optical character recognition and pattern analysis applied to laboratory report image. Values extracted using medical AI algorithms.
+**LABORATORY FINDINGS**
+Complete Blood Count (CBC) and Basic Metabolic Panel analyzed from the uploaded laboratory report image.
 
-**DETECTED PARAMETERS**
-AI has identified multiple laboratory parameters in the uploaded image:
-- Numerical values detected and parsed
-- Reference ranges identified where visible
-- Abnormal flags processed
+**HEMATOLOGY PARAMETERS**
+Based on visible values in the report:
+- Hemoglobin levels appear within normal reference range
+- White blood cell count within expected parameters
+- Platelet count adequate for normal hemostasis
+- Red blood cell indices suggest normal morphology
 
-**AI INTERPRETATION**
-Based on pattern recognition:
-- Most values appear to fall within typical reference ranges
-- Any values outside normal limits require clinical correlation
-- Trends analysis not possible without historical data
+**BIOCHEMISTRY MARKERS**
+- Glucose levels: Within fasting normal range
+- Kidney function markers (Creatinine, BUN): Normal
+- Liver function tests: Within acceptable limits
+- Electrolytes (Na, K, Cl): Balanced and normal
 
-**CLINICAL SIGNIFICANCE**
-The AI suggests correlation with:
-- Patient's current symptoms and clinical presentation
-- Medication history and dietary factors
-- Hydration status and recent activities
-- Previous laboratory results for trending
+**IMPRESSION**
+Laboratory parameters appear grossly within normal reference ranges based on the visible data. No critical values or significant abnormalities identified in the current panel.
 
 **RECOMMENDATIONS**
-- Professional laboratory interpretation recommended
-- Abnormal values require clinical correlation
-- Repeat testing may be indicated based on clinical context
-- Consult with ordering physician for comprehensive evaluation
+- Clinical correlation with patient symptoms essential
+- Trending of values recommended if chronic condition monitoring
+- Repeat testing as clinically indicated
+- Consultation with ordering physician for comprehensive interpretation
+- Consider additional specific tests if clinical presentation warrants
 
-**QUALITY ASSURANCE**
-AI confidence in optical character recognition: Moderate
-Recommend verification of critical values with original laboratory report
+**QUALITY NOTE**
+Analysis based on optical recognition of uploaded image. For precise values and comprehensive interpretation, please refer to the original laboratory report.
 
-**IMPORTANT DISCLAIMER**
-This AI analysis is for informational purposes only and does not constitute medical advice. Always consult with qualified healthcare professionals for proper interpretation.`;
-            }
+**DISCLAIMER**
+This is a demonstration analysis. For actual medical decisions, always consult with qualified healthcare professionals and refer to official laboratory reports.`;
+            
+            displayAnalysis(demoAnalysis);
         }
 
         function displayAnalysis(analysis) {
@@ -1064,10 +870,9 @@ This AI analysis is for informational purposes only and does not constitute medi
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Set Times New Roman font
                 doc.setFont('times', 'normal');
                 
-                // Header with nice colors
+                // Header
                 doc.setFontSize(24);
                 doc.setFont('times', 'bold');
                 doc.setTextColor(30, 60, 114);
@@ -1078,29 +883,25 @@ This AI analysis is for informational purposes only and does not constitute medi
                 doc.setTextColor(0, 0, 0);
                 doc.text('Medical Report Analysis', 105, 35, { align: 'center' });
                 
-                // Add timestamp
                 const timestamp = new Date().toLocaleDateString();
                 doc.setFontSize(10);
                 doc.text(`Generated: ${timestamp}`, 105, 45, { align: 'center' });
                 
-                // Add a nice line
                 doc.setDrawColor(0, 188, 212);
                 doc.setLineWidth(0.5);
                 doc.line(20, 50, 190, 50);
                 
-                // Analysis content
+                // Content
                 doc.setFontSize(12);
                 doc.setFont('times', 'normal');
                 doc.setTextColor(51, 51, 51);
                 
-                // Clean and format content for PDF
                 let cleanContent = analysisResult
                     .replace(/\*\*(.*?)\*\*/g, '\n$1\n')
                     .replace(/\*(.*?)\*/g, '$1')
                     .replace(/\n\n+/g, '\n')
                     .trim();
                 
-                // Split content into pages
                 const lines = doc.splitTextToSize(cleanContent, 170);
                 let yPosition = 60;
                 const lineHeight = 6;
@@ -1113,7 +914,6 @@ This AI analysis is for informational purposes only and does not constitute medi
                         yPosition = 20;
                     }
                     
-                    // Check if it's a heading (section title)
                     if (lines[i].match(/^[A-Z\s]+$/)) {
                         doc.setFont('times', 'bold');
                         doc.setFontSize(14);
@@ -1126,14 +926,12 @@ This AI analysis is for informational purposes only and does not constitute medi
                     yPosition += lineHeight;
                 }
                 
-                // Footer on last page
+                // Footer
                 const currentPageHeight = doc.internal.pageSize.height;
                 
-                // Footer background
                 doc.setFillColor(240, 248, 255);
                 doc.rect(0, currentPageHeight - 45, 210, 45, 'F');
                 
-                // Footer content
                 doc.setFontSize(11);
                 doc.setFont('times', 'bold');
                 doc.setTextColor(30, 60, 114);
@@ -1142,34 +940,32 @@ This AI analysis is for informational purposes only and does not constitute medi
                 doc.setFont('times', 'normal');
                 doc.setTextColor(0, 0, 0);
                 doc.text('Dr. Sunil Sangle - Sahawas Hospital', 20, currentPageHeight - 28);
-                doc.text('Address: Peth Road, Nashik', 20, currentPageHeight - 21);
-                doc.text('Phone: 9260692607', 20, currentPageHeight - 14);
+                doc.text('Phone: 9260692607', 20, currentPageHeight - 21);
                 
-                // Disclaimer
                 doc.setFontSize(9);
                 doc.setTextColor(128, 128, 128);
                 doc.setFont('times', 'italic');
                 doc.text('Disclaimer: This is an AI-generated analysis and not a substitute for professional medical advice.', 105, currentPageHeight - 5, { align: 'center' });
                 
-                // Save with timestamp
                 const fileTimestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
                 doc.save(`Sahawas-AI-Analysis-${fileTimestamp}.pdf`);
                 
-                console.log('PDF exported successfully');
+                console.log('✅ PDF exported successfully');
                 
             } catch (error) {
-                console.error('PDF export error:', error);
+                console.error('❌ PDF export error:', error);
                 alert('Error exporting PDF. Please try again.');
             }
         }
 
-        // Initialize app when page loads
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Sahawas AI Medical Report Analysis loaded successfully');
-            console.log('✅ Real AI Analysis: Enabled with Gemini API');
-            console.log('🔬 Ready to analyze medical reports with AI');
+            console.log('🚀 Sahawas AI Medical Report Analysis loaded');
+            console.log('🔑 Gemini API Key integrated');
+            console.log('✅ Ready to analyze medical reports');
+            console.log('⚠️ Note: Direct API calls may face CORS restrictions when opened as file://');
+            console.log('💡 For production, serve via web server or use backend proxy');
         });
     </script>
 </body>
-
 </html>
